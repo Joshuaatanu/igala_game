@@ -1,0 +1,23 @@
+# Ignore the CSV file
+clean.csv
+
+# Ignore any other CSV files in the project
+*.csv
+
+# Ignore directories commonly used by various operating systems
+.DS_Store
+Thumbs.db
+
+# Ignore Python cache files and folders
+__pycache__/
+*.py[cod]
+
+# Ignore virtual environment directories
+env/
+venv/
+
+# Ignore any log files
+*.log
+
+# Ignore Streamlit cache files (if you are using Streamlit)
+.streamlit/
