@@ -8,6 +8,8 @@ st.title("English-Igala Flashcard Quiz")
 @st.cache_data
 def load_data(file_path):
     data = pd.read_csv(file_path)
+    data.dropna(subset=['Igala'], inplace=True)  # Drop rows where the Igala word is NaN
+    data['Igala'] = data['Igala'].astype(str)  # Convert all Igala words to strings
     return data
 
 # Load the dataset
@@ -33,6 +35,8 @@ if 'current_question' not in st.session_state:
     st.session_state.current_question = 0
 if 'questions' not in st.session_state:
     st.session_state.questions = []
+if 'answers' not in st.session_state:
+    st.session_state.answers = []
 
 total_questions = 5  # Number of questions in the quiz
 
@@ -40,6 +44,7 @@ def start_quiz():
     st.session_state.score = 0
     st.session_state.current_question = 0
     st.session_state.questions = []
+    st.session_state.answers = []
 
     igala_words = data['Igala'].tolist()  # List of all Igala words for generating options
 
@@ -50,32 +55,52 @@ def start_quiz():
         st.session_state.questions.append({
             'english_word': english_word,
             'correct_translation': correct_translation,
-            'options': options
+            'options': options,
+            'user_choice': None  # To store the user's choice
         })
 
-if st.button("Start Quiz") or len(st.session_state.questions) == total_questions:
-    if len(st.session_state.questions) == 0:
-        start_quiz()
+# Check if Start Quiz button is clicked
+if st.button("Start Quiz"):
+    start_quiz()
 
-    if st.session_state.current_question < total_questions:
-        question = st.session_state.questions[st.session_state.current_question]
-        st.subheader(f"Question {st.session_state.current_question + 1}: What is the Igala word for '{question['english_word']}'?")
+# Display current question
+if st.session_state.questions and st.session_state.current_question < total_questions:
+    question = st.session_state.questions[st.session_state.current_question]
+    st.subheader(f"Question {st.session_state.current_question + 1}: What is the Igala word for '{question['english_word']}'?")
 
-        user_choice = st.radio("Choose an option:", question['options'])
+    # Display radio buttons for options
+    st.session_state.questions[st.session_state.current_question]['user_choice'] = st.radio(
+        "Choose an option:",
+        question['options'],
+        index=question['options'].index(question['user_choice']) if question['user_choice'] else 0
+    )
 
+    # Buttons for navigation
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col1:
+        if st.session_state.current_question > 0:
+            if st.button("Previous"):
+                st.session_state.current_question -= 1
+    with col2:
+        if st.session_state.current_question < total_questions - 1:
+            if st.button("Next"):
+                st.session_state.current_question += 1
+    with col3:
         if st.button("Submit Answer"):
-            if user_choice.lower() == question['correct_translation'].lower():
-                st.success("Correct!")
+            if st.session_state.questions[st.session_state.current_question]['user_choice'] == question['correct_translation']:
                 st.session_state.score += 1
-            else:
-                st.error(f"Wrong. The correct answer is '{question['correct_translation']}'.")
             st.session_state.current_question += 1
             if st.session_state.current_question == total_questions:
                 st.balloons()
                 st.write(f"Quiz Completed! Your final score: {st.session_state.score}/{total_questions}")
                 st.write("Click 'Start Quiz' to play again.")
-    else:
-        st.write(f"Quiz Completed! Your final score: {st.session_state.score}/{total_questions}")
-        st.write("Click 'Start Quiz' to play again.")
-else:
-    st.write("Click 'Start Quiz' to begin the English-Igala Flashcard Quiz!")
+
+# Summary of answers
+if st.session_state.current_question == total_questions:
+    st.write("### Quiz Summary")
+    for i, q in enumerate(st.session_state.questions):
+        st.write(f"**Question {i + 1}:** What is the Igala word for '{q['english_word']}'?")
+        st.write(f"- Your answer: {q['user_choice']}")
+        st.write(f"- Correct answer: {q['correct_translation']}")
+    st.write(f"**Final Score:** {st.session_state.score}/{total_questions}")
+    st.write("Click 'Start Quiz' to play again.")

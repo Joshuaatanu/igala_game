@@ -1,5 +1,5 @@
 # Ignore the CSV file
-clean.csv
+
 
 # Ignore any other CSV files in the project
 *.csv
